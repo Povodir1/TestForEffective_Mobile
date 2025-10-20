@@ -1,0 +1,49 @@
+from app.schemas.user import UserRegisterSchema,UserSchema,UserUpdateSchema
+from app.models.user import User
+from app.models.basket_item import BasketItem
+from app.security import hash_pass
+
+
+def db_create_user(new_user:UserRegisterSchema,session):
+    if new_user.password != new_user.again_password:
+        raise ValueError("Разные пароли")
+    if new_user.email in [user.email for user in session.query(User).all()]:
+        raise ValueError("Пользователь с таким email уже существует")
+    user = User(name = new_user.name,surname = new_user.surname,
+                middle_name = new_user.middle_name,email = new_user.email,
+                password_hash = hash_pass(new_user.password))
+    session.add(user)
+    session.flush()
+    return UserSchema(id = user.id,name = user.name,surname = user.surname,
+                      middle_name = user.middle_name,email = user.email,
+                      role = user.role,money=user.money)
+
+
+def db_get_user(user_id:int,session):
+    user = session.query(User).filter(User.id == user_id,User.is_active == True).first()
+    return UserSchema(id=user.id, name=user.name, surname=user.surname,
+                      middle_name=user.middle_name, email=user.email,
+                      role=user.role, money=user.money)
+
+def db_get_all_users(session):
+    users = session.query(User).all()
+    return [UserSchema(id=user.id, name=user.name, surname=user.surname,
+                      middle_name=user.middle_name, email=user.email,
+                      role=user.role, money=user.money) for user in users]
+
+def db_update_user(user_id:int,new_data:UserUpdateSchema,session):
+    user = session.query(User).filter(User.id == user_id,User.is_active == True).first()
+    if not user:
+        raise ValueError("Нет пользователя с таким id")
+    for key, value in new_data.model_dump(exclude_none=True).items():
+        setattr(user, key, value)
+    session.flush()
+    return UserSchema(id=user.id, name=user.name, surname=user.surname,
+                      middle_name=user.middle_name, email=user.email,
+                      role=user.role, money=user.money)
+
+
+def db_delete_user(user_id:int,session):
+    user = session.query(User).filter(User.id == user_id,User.is_active == True).first()
+    user.is_active = False
+    session.query(BasketItem).filter(BasketItem.user_id == user_id).delete()
