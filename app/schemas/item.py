@@ -20,4 +20,3 @@ class ItemPatchSchema(BaseModel):
     price: Optional[float] = None
     info: Optional[str] = None
     stock: Optional[int] = None
-    is_active: Optional[bool] = None

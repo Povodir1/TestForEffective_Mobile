@@ -1,7 +1,7 @@
 from sqlalchemy.engine import create_engine
 from sqlalchemy.orm import Session,sessionmaker
 from app.config import settings
-
+from app.models import Base
 engine = create_engine(settings.DB_URL)
 
 SessionLocal = sessionmaker(bind=engine,class_=Session)
@@ -17,5 +17,9 @@ def get_session():
         raise
     finally:
         session.close()
-"""from app.models import Base
-Base.metadata.create_all(bind = engine)"""
+
+def clear_db():
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind = engine)
+
+

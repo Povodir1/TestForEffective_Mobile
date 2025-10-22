@@ -1,6 +1,6 @@
 from app.schemas.item import ItemShortSchema,ItemCreateSchema, ItemPatchSchema
 from app.models import Item
-
+from app.exceptions import ObjectNotFoundError
 
 
 def db_get_all_items(limit_num:int, page:int,session):
@@ -12,7 +12,7 @@ def db_get_all_items(limit_num:int, page:int,session):
 def db_get_item(item_id:int,session):
     item = session.query(Item).filter(Item.is_active == True,Item.id == item_id).first()
     if not item:
-        raise ValueError("Item not found")
+        raise ObjectNotFoundError("Item not found")
     return ItemShortSchema(id = item.id,name = item.name,price=item.price,info = item.info,stock = item.stock)
 
 def db_create_item(add_item:ItemCreateSchema,session):
@@ -26,7 +26,7 @@ def db_delete_item(item_id,session):
     item = session.query(Item).filter(Item.id == item_id,
                                       Item.is_active == True).first()
     if not item:
-        raise ValueError("Item not found")
+        raise ObjectNotFoundError("Item not found")
     item.is_active = False
     items_in_basket = item.basket_items
     if items_in_basket:
@@ -38,7 +38,7 @@ async def db_patch_item(item_id:int, new_data:ItemPatchSchema,session):
     item = session.query(Item).filter(Item.id == item_id,
                                       Item.is_active == True).first()
     if not item:
-        raise ValueError("Item not found")
+        raise ObjectNotFoundError("Item not found")
     for key,value in new_data.model_dump(exclude_none=True).items():
         setattr(item,key,value)
     session.flush()

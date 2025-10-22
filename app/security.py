@@ -8,8 +8,10 @@ from pydantic import EmailStr
 from app.database import get_session
 from app.models.user import User
 from app.models.token_blacklist import TokenBlackList
+from app.models.permission import Permission
+from app.models.role import Role
 from fastapi import HTTPException,status
-
+import enum
 ALGORITHM = "HS256"
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -46,7 +48,7 @@ def user_by_auth(email:str|EmailStr,password:str,session):
         raise ValueError("Неверный логин или пароль")
     if not verify_pass(password,user.password_hash):
         raise ValueError("Неверный логин или пароль")
-    return UserTokenDataSchema(id = user.id,role = user.role)
+    return UserTokenDataSchema(id = user.id,role = user.roles.name)
 
 
 def is_token_blacklisted(token:str,session):
@@ -59,3 +61,36 @@ def is_token_blacklisted(token:str,session):
 def black_token(token,session):
     blacked_token = TokenBlackList(token = token)
     session.add(blacked_token)
+
+
+class RoleEnum(enum.Enum):
+    Admin = "Admin"
+    Manager = "Manager"
+    User = "User"
+
+class ActionEnum(enum.Enum):
+    CREATE = "CREATE"
+    READ = "READ"
+    READ_ALL = "READ_ALL"
+    UPDATE = "UPDATE"
+    DELETE = "DELETE"
+
+class ResourceEnum(enum.Enum):
+    ITEMS = "ITEMS"
+    ORDERS = "ORDERS"
+    BASKET_ITEMS = "BASKET_ITEMS"
+    USERS = "USERS"
+    ROLES = "ROLES"
+    PERMISSIONS = "PERMISSIONS"
+
+def check_permissions(resource:ResourceEnum,
+               action:ActionEnum):
+    def wrapped(user:UserTokenDataSchema = Depends(get_token),
+               session = Depends(get_session)):
+        user_permissions = session.query(Permission).join(Role).filter( Role.name == user.role,
+                                                                        Permission.resource == resource.value,
+                                                                        Permission.action == action.value).first()
+        if not user_permissions:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="no perm")
+    return wrapped
+

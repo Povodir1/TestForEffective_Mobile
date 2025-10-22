@@ -5,3 +5,5 @@ from app.models.order import Order
 from app.models.token_blacklist import TokenBlackList
 from app.models.order_item import OrderItem
 from app.models.basket_item import BasketItem
+from app.models.role import Role
+from app.models.permission import Permission
