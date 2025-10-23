@@ -7,13 +7,14 @@ from app.api.admin.users import router as admin_user_router
 from app.api.manager.items import router as admin_item_router
 from app.api.admin.permission import router as admin_permission_router
 
-from app.api.guest.items import router as user_items
+from app.api.user.items import router as user_items
 from app.api.user.basket import router as user_basket
 from app.api.user.orders import router as user_orders
 from app.api.user.profile import router as user_profile
 
 from app.exceptions import (InvalidDataError,NoMoneyError,
-                            ObjectNotFoundError,ObjectAlreadyExistError)
+                            ObjectNotFoundError,ObjectAlreadyExistError,
+                            UnauthorizedError,NoPermissionsError)
 
 from app.new_dataset import main_seeder
 
@@ -49,11 +50,17 @@ async def conflict_exception_handler(request: Request, exc: ObjectAlreadyExistEr
         status_code=status.HTTP_409_CONFLICT,
         content={"detail": exc.detail})
 
+@app.exception_handler(NoPermissionsError)
 @app.exception_handler(NoMoneyError)
 async def forbidden_exception_handler(request: Request, exc: NoMoneyError):
     return JSONResponse(
         status_code=status.HTTP_403_FORBIDDEN,
         content={"detail": exc.detail})
 
+@app.exception_handler(UnauthorizedError)
+async def unauthorized_exception_handler(request: Request, exc: UnauthorizedError):
+    return JSONResponse(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        content={"detail": exc.detail})
 #заполянем тестовыми данными
 main_seeder()

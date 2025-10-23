@@ -1,4 +1,4 @@
-from fastapi import APIRouter,Depends
+from fastapi import APIRouter,Depends,status
 from app.crud.order import db_get_all_orders,db_create_order
 from app.security import check_permissions,ActionEnum as Act,ResourceEnum as Res,get_token
 from app.database import get_session
@@ -13,7 +13,7 @@ def get_all_orders(user:UserTokenDataSchema = Depends(get_token),
     response = db_get_all_orders(user.id,session)
     return response
 
-@router.post("/create")
+@router.post("/create",status_code=status.HTTP_201_CREATED)
 def add_to_basket(user:UserTokenDataSchema = Depends(get_token),
                   perm=Depends(check_permissions(Res.ORDERS, Act.CREATE)),
                   session = Depends(get_session)):

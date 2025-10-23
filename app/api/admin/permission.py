@@ -1,5 +1,7 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends,status
 from sqlalchemy.orm import Session
+
+
 from app.database import get_session
 from app.security import check_permissions, ActionEnum as Act, ResourceEnum as Res, get_token,ResourceEnum,ActionEnum,RoleEnum
 from app.schemas.user import UserTokenDataSchema
@@ -17,9 +19,6 @@ def update_user_role(user_id:int,
     response = db_update_user_role(user_id,role,session)
     return response
 
-
-
-
 @router.get("/permissions")
 def get_all_permissions(user:UserTokenDataSchema = Depends(get_token),
                         perm = Depends(check_permissions(Res.PERMISSIONS,Act.READ)),
@@ -27,7 +26,7 @@ def get_all_permissions(user:UserTokenDataSchema = Depends(get_token),
     response = db_get_all_permissions(session)
     return response
 
-@router.post("/permissions")
+@router.post("/permissions",status_code=status.HTTP_201_CREATED)
 def add_permissions(role:RoleEnum,
                     resource:ResourceEnum,
                     action:ActionEnum,
@@ -45,5 +44,5 @@ def delete_permissions( role:RoleEnum,
                         perm = Depends(check_permissions(Res.PERMISSIONS,Act.DELETE)),
                         session:Session = Depends(get_session)):
 
-    response = db_delete_permission(role=role,resource=resource,action=action, session=session)
-    return response
+    db_delete_permission(role=role,resource=resource,action=action, session=session)
+    return {"message":"Permission deleted"}

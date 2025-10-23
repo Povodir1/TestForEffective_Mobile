@@ -15,3 +15,9 @@ class InvalidDataError(BaseDomainException):
 
 class NoMoneyError(BaseDomainException):
     pass
+
+class UnauthorizedError(BaseDomainException):
+    pass
+
+class NoPermissionsError(BaseDomainException):
+    pass

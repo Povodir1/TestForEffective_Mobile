@@ -34,7 +34,7 @@ def db_delete_item(item_id,session):
             session.delete(i)
 
 
-async def db_patch_item(item_id:int, new_data:ItemPatchSchema,session):
+def db_patch_item(item_id:int, new_data:ItemPatchSchema,session):
     item = session.query(Item).filter(Item.id == item_id,
                                       Item.is_active == True).first()
     if not item:

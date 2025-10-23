@@ -12,6 +12,7 @@ class UserRegisterSchema(UserLoginSchema):
     surname:str
     middle_name:str
 
+
 class UserUpdateSchema(BaseModel):
     name:Optional[str] = None
     surname:Optional[str] = None

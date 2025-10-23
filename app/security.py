@@ -10,8 +10,8 @@ from app.models.user import User
 from app.models.token_blacklist import TokenBlackList
 from app.models.permission import Permission
 from app.models.role import Role
-from fastapi import HTTPException,status
 import enum
+from app.exceptions import ObjectNotFoundError,UnauthorizedError,NoPermissionsError
 ALGORITHM = "HS256"
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -20,7 +20,7 @@ user_auth = OAuth2PasswordBearer(tokenUrl="/login")
 def get_token(token:str = Depends(user_auth),session = Depends(get_session)):
     tk = session.query(TokenBlackList).filter(TokenBlackList.token == token).first()
     if tk:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,detail="Unauthorized")
+        raise UnauthorizedError(detail="Unauthorized")
     return decode_token(token)
 
 def hash_pass(password:str):
@@ -45,16 +45,16 @@ def decode_token(token:str):
 def user_by_auth(email:str|EmailStr,password:str,session):
     user = session.query(User).filter(User.email == email,User.is_active == True).first()
     if not user:
-        raise ValueError("Неверный логин или пароль")
+        raise ObjectNotFoundError("Неверный логин или пароль")
     if not verify_pass(password,user.password_hash):
-        raise ValueError("Неверный логин или пароль")
+        raise ObjectNotFoundError("Неверный логин или пароль")
     return UserTokenDataSchema(id = user.id,role = user.roles.name)
 
 
 def is_token_blacklisted(token:str,session):
     blacked_token = session.query(TokenBlackList).filter(TokenBlackList.token == token).first()
     if blacked_token:
-        raise ValueError("Unautorize")
+        raise UnauthorizedError("Unauthorize")
     return token
 
 
@@ -91,6 +91,6 @@ def check_permissions(resource:ResourceEnum,
                                                                         Permission.resource == resource.value,
                                                                         Permission.action == action.value).first()
         if not user_permissions:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="no perm")
+            raise NoPermissionsError(detail="No permissions")
     return wrapped
 

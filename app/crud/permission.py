@@ -1,8 +1,9 @@
 from app.models import Permission,Role,User
 from app.schemas.permission import PermissionDataSchema,RolePermissionSchema,AddPermissionSchema
 from app.security import RoleEnum,ActionEnum,ResourceEnum
-from app.exceptions import (ObjectNotFoundError,ObjectAlreadyExistError,
-                            InvalidDataError)
+from app.exceptions import (ObjectNotFoundError, ObjectAlreadyExistError,
+                            InvalidDataError, NoPermissionsError)
+from app.schemas.user import UserTokenDataSchema
 
 def db_get_all_permissions(session):
     all_roles = session.query(Role).all()
@@ -39,9 +40,11 @@ def db_get_all_permissions(session):
 def db_add_permission(role:RoleEnum,
                       resource:ResourceEnum,
                       action:ActionEnum,
+                      user:UserTokenDataSchema,
                       session):
     role_obj = session.query(Role).filter(Role.name == role.value).first()
-
+    if user.role == role.value:
+        raise NoPermissionsError("No Permissions")
     if not role_obj:
         raise ObjectNotFoundError(f"Роль '{role.name}' не найдена.")
 

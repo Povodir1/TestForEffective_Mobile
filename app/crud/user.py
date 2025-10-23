@@ -1,7 +1,10 @@
+from sqlalchemy.orm import Session
+
 from app.schemas.user import UserRegisterSchema,UserSchema,UserUpdateSchema
 from app.models.user import User
 from app.models.basket_item import BasketItem
-from app.security import hash_pass
+from app.models.role import Role
+from app.security import hash_pass,RoleEnum
 from app.exceptions import InvalidDataError,ObjectAlreadyExistError,ObjectNotFoundError
 
 def db_create_user(new_user:UserRegisterSchema,session):
@@ -9,9 +12,10 @@ def db_create_user(new_user:UserRegisterSchema,session):
         raise InvalidDataError("Разные пароли")
     if new_user.email in [user.email for user in session.query(User).all()]:
         raise ObjectAlreadyExistError("Пользователь с таким email уже существует")
+    user_role = session.query(Role).filter(Role.name == RoleEnum.User.value).first()
     user = User(name = new_user.name,surname = new_user.surname,
                 middle_name = new_user.middle_name,email = new_user.email,
-                password_hash = hash_pass(new_user.password))
+                role_id = user_role.id,password_hash = hash_pass(new_user.password))
     session.add(user)
     session.flush()
     return UserSchema(id = user.id,name = user.name,surname = user.surname,

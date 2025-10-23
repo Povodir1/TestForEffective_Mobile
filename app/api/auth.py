@@ -1,7 +1,7 @@
-from fastapi import APIRouter, HTTPException, status,Depends
+from fastapi import APIRouter, status,Depends
 from fastapi.security import OAuth2PasswordRequestForm
 
-from app.schemas.user import UserRegisterSchema,UserLoginSchema,UserTokenDataSchema
+from app.schemas.user import UserRegisterSchema,UserTokenDataSchema
 from app.security import create_token,user_by_auth,black_token,user_auth
 from app.database import get_session
 from sqlalchemy.orm.session import Session
@@ -10,7 +10,7 @@ from app.exceptions import InvalidDataError
 router = APIRouter(tags=["Auth"])
 
 
-@router.post("/register")
+@router.post("/register",status_code=status.HTTP_201_CREATED)
 def register(new_user:UserRegisterSchema,
              session:Session = Depends(get_session)):
 

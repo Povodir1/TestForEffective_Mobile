@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends,status
 from app.crud.basket import db_get_basket_items,db_add_to_basket,db_delete_from_basket
 from app.security import check_permissions,ActionEnum as Act,ResourceEnum as Res,get_token
 from app.database import get_session
@@ -15,7 +15,7 @@ def get_basket(user:UserTokenDataSchema = Depends(get_token),
     return response
 
 
-@router.post("/add")
+@router.post("/add",status_code=status.HTTP_201_CREATED)
 def add_to_basket(item_id:int,
                   count:int  = 1,
                   user:UserTokenDataSchema = Depends(get_token),
@@ -32,5 +32,5 @@ def del_from_basket(item_id:int,
                     perm=Depends(check_permissions(Res.BASKET_ITEMS, Act.DELETE)),
                     session = Depends(get_session)):
 
-    response = db_delete_from_basket(item_id,user.id,session)
-    return response
+    db_delete_from_basket(item_id,user.id,session)
+    return {"message":"Item deleted from basket"}
